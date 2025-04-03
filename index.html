@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anime API Documentation</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Anime API Documentation</h1>
+            <p class="description">A comprehensive API for anime information and data</p>
+        </header>
+
+        <nav class="endpoints-nav">
+            <button class="active" data-section="search">Search</button>
+            <button data-section="anime">Anime Details</button>
+            <button data-section="recent">Recent</button>
+            <button data-section="top">Top Anime</button>
+            <button data-section="genres">Genres</button>
+            <button data-section="recommendations">Recommendations</button>
+            <button data-section="schedule">Schedule</button>
+            <button data-section="random">Random</button>
+        </nav>
+        
+        <main>
+            <section id="search" class="endpoint-section active">
+                <h2>Search Anime</h2>
+                <div class="endpoint-info">
+                    <code>GET /api/search/:query</code>
+                    <p>Search for anime by title</p>
+                </div>
+                <div class="test-area">
+                    <input type="text" id="searchQuery" placeholder="Enter anime title (e.g., 'Naruto')">
+                    <button onclick="testEndpoint('search')">Test Endpoint</button>
+                </div>
+                <div class="result-area">
+                    <h3>API URL:</h3>
+                    <code id="searchUrl" class="url"></code>
+                    <h3>Response:</h3>
+                    <pre id="searchResult" class="response"></pre>
+                </div>
+            </section>
+
+            <section id="anime" class="endpoint-section">
+                <h2>Anime Details</h2>
+                <div class="endpoint-info">
+                    <code>GET /api/anime/:id</code>
+                    <p>Get detailed information about an anime</p>
+                </div>
+                <div class="test-area">
+                    <input type="text" id="animeId" placeholder="Enter anime ID (e.g., '1')">
+                    <button onclick="testEndpoint('anime')">Test Endpoint</button>
+                </div>
+                <div class="result-area">
+                    <h3>API URL:</h3>
+                    <code id="animeUrl" class="url"></code>
+                    <h3>Response:</h3>
+                    <pre id="animeResult" class="response"></pre>
+                </div>
+            </section>
+
+            <section id="recent" class="endpoint-section">
+                <h2>Recent Anime</h2>
+                <div class="endpoint-info">
+                    <code>GET /api/recent</code>
+                    <p>Get currently airing anime</p>
+                </div>
+                <div class="test-area">
+                    <button onclick="testEndpoint('recent')">Test Endpoint</button>
+                </div>
+                <div class="result-area">
+                    <h3>API URL:</h3>
+                    <code id="recentUrl" class="url"></code>
+                    <h3>Response:</h3>
+                    <pre id="recentResult" class="response"></pre>
+                </div>
+            </section>
+
+            <section id="top" class="endpoint-section">
+                <h2>Top Anime</h2>
+                <div class="endpoint-info">
+                    <code>GET /api/top</code>
+                    <p>Get top-rated anime</p>
+                </div>
+                <div class="test-area">
+                    <button onclick="testEndpoint('top')">Test Endpoint</button>
+                </div>
+                <div class="result-area">
+                    <h3>API URL:</h3>
+                    <code id="topUrl" class="url"></code>
+                    <h3>Response:</h3>
+                    <pre id="topResult" class="response"></pre>
+                </div>
+            </section>
+
+            <section id="genres" class="endpoint-section">
+                <h2>Anime Genres</h2>
+                <div class="endpoint-info">
+                    <code>GET /api/genres</code>
+                    <p>Get list of anime genres</p>
+                </div>
+                <div class="test-area">
+                    <button onclick="testEndpoint('genres')">Test Endpoint</button>
+                </div>
+                <div class="result-area">
+                    <h3>API URL:</h3>
+                    <code id="genresUrl" class="url"></code>
+                    <h3>Response:</h3>
+                    <pre id="genresResult" class="response"></pre>
+                </div>
+            </section>
+
+            <section id="recommendations" class="endpoint-section">
+                <h2>Anime Recommendations</h2>
+                <div class="endpoint-info">
+                    <code>GET /api/recommendations/:id</code>
+                    <p>Get recommendations for an anime</p>
+                </div>
+                <div class="test-area">
+                    <input type="text" id="recommendationsId" placeholder="Enter anime ID (e.g., '1')">
+                    <button onclick="testEndpoint('recommendations')">Test Endpoint</button>
+                </div>
+                <div class="result-area">
+                    <h3>API URL:</h3>
+                    <code id="recommendationsUrl" class="url"></code>
+                    <h3>Response:</h3>
+                    <pre id="recommendationsResult" class="response"></pre>
+                </div>
+            </section>
+
+            <section id="schedule" class="endpoint-section">
+                <h2>Anime Schedule</h2>
+                <div class="endpoint-info">
+                    <code>GET /api/schedule</code>
+                    <p>Get anime broadcast schedule</p>
+                </div>
+                <div class="test-area">
+                    <button onclick="testEndpoint('schedule')">Test Endpoint</button>
+                </div>
+                <div class="result-area">
+                    <h3>API URL:</h3>
+                    <code id="scheduleUrl" class="url"></code>
+                    <h3>Response:</h3>
+                    <pre id="scheduleResult" class="response"></pre>
+                </div>
+            </section>
+
+            <section id="random" class="endpoint-section">
+                <h2>Random Anime</h2>
+                <div class="endpoint-info">
+                    <code>GET /api/random</code>
+                    <p>Get a random anime</p>
+                </div>
+                <div class="test-area">
+                    <button onclick="testEndpoint('random')">Test Endpoint</button>
+                </div>
+                <div class="result-area">
+                    <h3>API URL:</h3>
+                    <code id="randomUrl" class="url"></code>
+                    <h3>Response:</h3>
+                    <pre id="randomResult" class="response"></pre>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
