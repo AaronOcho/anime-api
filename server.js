@@ -17,15 +17,36 @@ app.use(express.static(__dirname));
 
 const BASE_URL = 'https://api.jikan.moe/v4';
 const GOGOANIME_API = 'https://api.consumet.org/anime/gogoanime';
+const ALTERNATIVE_API = 'https://api.consumet.org/meta/anilist';
 
 const axiosInstance = axios.create({
-    timeout: 30000,
+    timeout: 60000,
     headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
+    },
+    validateStatus: function (status) {
+        return status >= 200 && status < 500;
+    },
+    maxRedirects: 5,
+    maxContentLength: 50 * 1000 * 1000
 });
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+const handleAxiosError = (error) => {
+    if (error.response) {
+        return {
+            status: error.response.status,
+            message: error.response.data?.message || 'API request failed',
+            details: error.response.data
+        };
+    }
+    return {
+        status: 500,
+        message: error.message,
+        details: 'Internal server error'
+    };
+};
 
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'healthy' });
@@ -52,7 +73,8 @@ app.get('/api/search/:query', async (req, res) => {
         }));
         res.json({ status: 'success', query: req.params.query, count: results.length, results });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: error.message });
+        const errorDetails = handleAxiosError(error);
+        res.status(errorDetails.status).json({ status: 'error', ...errorDetails });
     }
 });
 
@@ -88,7 +110,8 @@ app.get('/api/anime/:id', async (req, res) => {
         };
         res.json({ status: 'success', data: response });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: error.message });
+        const errorDetails = handleAxiosError(error);
+        res.status(errorDetails.status).json({ status: 'error', ...errorDetails });
     }
 });
 
@@ -105,7 +128,8 @@ app.get('/api/recent', async (req, res) => {
         }));
         res.json({ status: 'success', count: recent.length, data: recent });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: error.message });
+        const errorDetails = handleAxiosError(error);
+        res.status(errorDetails.status).json({ status: 'error', ...errorDetails });
     }
 });
 
@@ -122,7 +146,8 @@ app.get('/api/top', async (req, res) => {
         }));
         res.json({ status: 'success', count: topAnime.length, data: topAnime });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: error.message });
+        const errorDetails = handleAxiosError(error);
+        res.status(errorDetails.status).json({ status: 'error', ...errorDetails });
     }
 });
 
@@ -138,7 +163,8 @@ app.get('/api/genre/:id', async (req, res) => {
         }));
         res.json({ status: 'success', count: animeList.length, data: animeList });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: error.message });
+        const errorDetails = handleAxiosError(error);
+        res.status(errorDetails.status).json({ status: 'error', ...errorDetails });
     }
 });
 
@@ -153,7 +179,8 @@ app.get('/api/genres', async (req, res) => {
         }));
         res.json({ status: 'success', count: genres.length, data: genres });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: error.message });
+        const errorDetails = handleAxiosError(error);
+        res.status(errorDetails.status).json({ status: 'error', ...errorDetails });
     }
 });
 
@@ -168,7 +195,8 @@ app.get('/api/recommendations/:id', async (req, res) => {
         }));
         res.json({ status: 'success', count: recommendations.length, data: recommendations });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: error.message });
+        const errorDetails = handleAxiosError(error);
+        res.status(errorDetails.status).json({ status: 'error', ...errorDetails });
     }
 });
 
@@ -184,7 +212,8 @@ app.get('/api/schedule', async (req, res) => {
         }));
         res.json({ status: 'success', count: schedule.length, data: schedule });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: error.message });
+        const errorDetails = handleAxiosError(error);
+        res.status(errorDetails.status).json({ status: 'error', ...errorDetails });
     }
 });
 
@@ -203,81 +232,77 @@ app.get('/api/random', async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: error.message });
+        const errorDetails = handleAxiosError(error);
+        res.status(errorDetails.status).json({ status: 'error', ...errorDetails });
     }
 });
 
 app.get('/api/watch/:title', async (req, res) => {
     try {
         await delay(1000);
-        const searchResponse = await axiosInstance.get(`${GOGOANIME_API}/search/${encodeURIComponent(req.params.title)}`);
+        const searchResponse = await axiosInstance.get(`${ALTERNATIVE_API}/search/${encodeURIComponent(req.params.title)}`);
         
         if (!searchResponse.data.results?.length) {
             return res.status(404).json({ status: 'error', message: 'Anime not found' });
         }
 
         const animeId = searchResponse.data.results[0].id;
-
-        const [infoResponse, episodesResponse] = await Promise.all([
-            axiosInstance.get(`${GOGOANIME_API}/info/${animeId}`),
-            axiosInstance.get(`${GOGOANIME_API}/episodes/${animeId}`)
-        ]);
-
-        const firstEpisodeId = episodesResponse.data[0]?.id;
-        if (firstEpisodeId) {
-            const streamingResponse = await axiosInstance.get(`${GOGOANIME_API}/watch/${firstEpisodeId}`);
-            
-            const response = {
-                title: infoResponse.data.title,
-                episodes: episodesResponse.data.map(ep => ({
-                    number: ep.number,
-                    id: ep.id
-                })),
-                totalEpisodes: episodesResponse.data.length,
-                firstEpisode: {
-                    sources: streamingResponse.data.sources,
-                    subtitles: streamingResponse.data.subtitles
-                }
-            };
-
-            res.json({ status: 'success', data: response });
-        } else {
-            res.status(404).json({ status: 'error', message: 'No episodes found' });
+        const infoResponse = await axiosInstance.get(`${ALTERNATIVE_API}/info/${animeId}`);
+        
+        if (!infoResponse.data.episodes?.length) {
+            return res.status(404).json({ status: 'error', message: 'No episodes found' });
         }
+
+        const response = {
+            title: infoResponse.data.title,
+            episodes: infoResponse.data.episodes.map(ep => ({
+                number: ep.number,
+                id: ep.id,
+                title: ep.title
+            })),
+            totalEpisodes: infoResponse.data.episodes.length,
+        };
+
+        res.json({ status: 'success', data: response });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: error.message });
+        const errorDetails = handleAxiosError(error);
+        res.status(errorDetails.status).json({ status: 'error', ...errorDetails });
     }
 });
 
 app.get('/api/watch/:title/:episode', async (req, res) => {
     try {
         await delay(1000);
-        const searchResponse = await axiosInstance.get(`${GOGOANIME_API}/search/${encodeURIComponent(req.params.title)}`);
+        const searchResponse = await axiosInstance.get(`${ALTERNATIVE_API}/search/${encodeURIComponent(req.params.title)}`);
         
         if (!searchResponse.data.results?.length) {
             return res.status(404).json({ status: 'error', message: 'Anime not found' });
         }
 
         const animeId = searchResponse.data.results[0].id;
-        const episodesResponse = await axiosInstance.get(`${GOGOANIME_API}/episodes/${animeId}`);
+        const infoResponse = await axiosInstance.get(`${ALTERNATIVE_API}/info/${animeId}`);
         
-        const episode = episodesResponse.data.find(ep => ep.number === parseInt(req.params.episode));
+        const episode = infoResponse.data.episodes.find(ep => ep.number === parseInt(req.params.episode));
         
         if (!episode) {
             return res.status(404).json({ status: 'error', message: 'Episode not found' });
         }
 
-        const streamingResponse = await axiosInstance.get(`${GOGOANIME_API}/watch/${episode.id}`);
+        const streamingResponse = await axiosInstance.get(`${ALTERNATIVE_API}/watch/${episode.id}`);
         
         res.json({
             status: 'success',
             data: {
+                episodeNumber: episode.number,
+                episodeTitle: episode.title,
                 sources: streamingResponse.data.sources,
                 subtitles: streamingResponse.data.subtitles
             }
         });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: error.message });
+        console.error('Error details:', error);
+        const errorDetails = handleAxiosError(error);
+        res.status(errorDetails.status).json({ status: 'error', ...errorDetails });
     }
 });
 
