@@ -16,6 +16,7 @@ app.use(cors());
 app.use(express.static(__dirname));
 
 const BASE_URL = 'https://api.jikan.moe/v4';
+const GOGOANIME_API = 'https://api.consumet.org/anime/gogoanime';
 
 const axiosInstance = axios.create({
     timeout: 30000,
@@ -199,6 +200,80 @@ app.get('/api/random', async (req, res) => {
                 image: anime.images.jpg.image_url,
                 synopsis: anime.synopsis,
                 mal_id: anime.mal_id
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: error.message });
+    }
+});
+
+app.get('/api/watch/:title', async (req, res) => {
+    try {
+        await delay(1000);
+        const searchResponse = await axiosInstance.get(`${GOGOANIME_API}/search/${encodeURIComponent(req.params.title)}`);
+        
+        if (!searchResponse.data.results?.length) {
+            return res.status(404).json({ status: 'error', message: 'Anime not found' });
+        }
+
+        const animeId = searchResponse.data.results[0].id;
+
+        const [infoResponse, episodesResponse] = await Promise.all([
+            axiosInstance.get(`${GOGOANIME_API}/info/${animeId}`),
+            axiosInstance.get(`${GOGOANIME_API}/episodes/${animeId}`)
+        ]);
+
+        const firstEpisodeId = episodesResponse.data[0]?.id;
+        if (firstEpisodeId) {
+            const streamingResponse = await axiosInstance.get(`${GOGOANIME_API}/watch/${firstEpisodeId}`);
+            
+            const response = {
+                title: infoResponse.data.title,
+                episodes: episodesResponse.data.map(ep => ({
+                    number: ep.number,
+                    id: ep.id
+                })),
+                totalEpisodes: episodesResponse.data.length,
+                firstEpisode: {
+                    sources: streamingResponse.data.sources,
+                    subtitles: streamingResponse.data.subtitles
+                }
+            };
+
+            res.json({ status: 'success', data: response });
+        } else {
+            res.status(404).json({ status: 'error', message: 'No episodes found' });
+        }
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: error.message });
+    }
+});
+
+app.get('/api/watch/:title/:episode', async (req, res) => {
+    try {
+        await delay(1000);
+        const searchResponse = await axiosInstance.get(`${GOGOANIME_API}/search/${encodeURIComponent(req.params.title)}`);
+        
+        if (!searchResponse.data.results?.length) {
+            return res.status(404).json({ status: 'error', message: 'Anime not found' });
+        }
+
+        const animeId = searchResponse.data.results[0].id;
+        const episodesResponse = await axiosInstance.get(`${GOGOANIME_API}/episodes/${animeId}`);
+        
+        const episode = episodesResponse.data.find(ep => ep.number === parseInt(req.params.episode));
+        
+        if (!episode) {
+            return res.status(404).json({ status: 'error', message: 'Episode not found' });
+        }
+
+        const streamingResponse = await axiosInstance.get(`${GOGOANIME_API}/watch/${episode.id}`);
+        
+        res.json({
+            status: 'success',
+            data: {
+                sources: streamingResponse.data.sources,
+                subtitles: streamingResponse.data.subtitles
             }
         });
     } catch (error) {
