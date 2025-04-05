@@ -5,10 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     navButtons.forEach(button => {
         button.addEventListener('click', () => {
             const sectionId = button.dataset.section;
-            
             navButtons.forEach(btn => btn.classList.remove('active'));
             sections.forEach(section => section.classList.remove('active'));
-            
             button.classList.add('active');
             document.getElementById(sectionId).classList.add('active');
         });
@@ -25,26 +23,28 @@ async function testEndpoint(endpoint) {
         switch(endpoint) {
             case 'search':
                 const query = document.getElementById('searchQuery').value;
-                if (!query) {
-                    throw new Error('Please enter a search query');
-                }
+                if (!query) throw new Error('Please enter a search query');
                 url = `${baseUrl}/api/search/${encodeURIComponent(query)}`;
                 break;
 
             case 'anime':
                 const animeId = document.getElementById('animeId').value;
-                if (!animeId) {
-                    throw new Error('Please enter an anime ID');
-                }
+                if (!animeId) throw new Error('Please enter an anime ID');
                 url = `${baseUrl}/api/anime/${animeId}`;
                 break;
 
             case 'recommendations':
                 const recId = document.getElementById('recommendationsId').value;
-                if (!recId) {
-                    throw new Error('Please enter an anime ID');
-                }
+                if (!recId) throw new Error('Please enter an anime ID');
                 url = `${baseUrl}/api/recommendations/${recId}`;
+                break;
+
+            case 'watch':
+                const watchTitle = document.getElementById('watchTitle').value;
+                const watchEpisode = document.getElementById('watchEpisode').value;
+                if (!watchTitle) throw new Error('Please enter an anime title');
+                url = `${baseUrl}/api/watch/${encodeURIComponent(watchTitle)}`;
+                if (watchEpisode) url += `/${watchEpisode}`;
                 break;
 
             case 'recent':
