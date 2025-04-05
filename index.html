@@ -22,8 +22,9 @@
             <button data-section="recommendations">Recommendations</button>
             <button data-section="schedule">Schedule</button>
             <button data-section="random">Random</button>
+            <button data-section="watch">Watch</button>
         </nav>
-        
+
         <main>
             <section id="search" class="endpoint-section active">
                 <h2>Search Anime</h2>
@@ -161,6 +162,27 @@
                     <code id="randomUrl" class="url"></code>
                     <h3>Response:</h3>
                     <pre id="randomResult" class="response"></pre>
+                </div>
+            </section>
+
+            <section id="watch" class="endpoint-section">
+                <h2>Watch Anime</h2>
+                <div class="endpoint-info">
+                    <code>GET /api/watch/:title</code>
+                    <p>Get streaming information for an anime</p>
+                    <code>GET /api/watch/:title/:episode</code>
+                    <p>Get streaming information for a specific episode</p>
+                </div>
+                <div class="test-area">
+                    <input type="text" id="watchTitle" placeholder="Enter anime title (e.g., 'Naruto')">
+                    <input type="number" id="watchEpisode" placeholder="Episode number (optional)">
+                    <button onclick="testEndpoint('watch')">Test Endpoint</button>
+                </div>
+                <div class="result-area">
+                    <h3>API URL:</h3>
+                    <code id="watchUrl" class="url"></code>
+                    <h3>Response:</h3>
+                    <pre id="watchResult" class="response"></pre>
                 </div>
             </section>
         </main>
